@@ -301,12 +301,10 @@ class Llama(LlamaPreTrainedModel):
             # forward the model to get the logits for the index in the sequence
             logits, _ = self(idx_cond)
             logits = logits[:, -1, :]  # crop to just the final time step
-            # todo
-            raise NotImplementedError
-
+            # done
             if temperature == 0.0:
                 # select the single most likely index
-                idx_next = None
+                idx_next = torch.argmax(logits, dim=-1, keepdim=True)
             else:
                 """
                 Perform temperature sampling:
@@ -317,7 +315,9 @@ class Llama(LlamaPreTrainedModel):
 
                 Note that we are not using top-k sampling/nucleus sampling in this procedure.
                 """
-                idx_next = None
+                probs = torch.softmax(logits / temperature, dim=-1)
+                idx_next = torch.multinomial(probs, 1)
+
             # append sampled index to the running sequence and continue
             idx = torch.cat((idx, idx_next), dim=1)
 
